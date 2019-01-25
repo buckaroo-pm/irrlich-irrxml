@@ -7,14 +7,14 @@
 
 #include <stdio.h>
 
-/** \mainpage irrXML 1.0 API documentation
+/** \mainpage irrXML 1.1 API documentation
  <div align="center"><img src="logobig.png" ></div>
 
  \section intro Introduction
 
   Welcome to the irrXML API documentation.
   Here you'll find any information you'll need to develop applications with
-  irrXML. If you look for a tutorial on how to start, take a look at the \ref example,
+  irrXML. If you look for a tutorial on how to start, take a look at the \ref irrxmlexample,
   at the homepage of irrXML at <A HREF="http://xml.irrlicht3d.org" >xml.irrlicht3d.org</A> 
   or into the SDK in the directory \example.
  
@@ -47,13 +47,10 @@
 
 	 Although irrXML has some strenghts, it currently also has the following limitations:
 
-	 - It only recognizes some special xml characters, not the full xml standard:
-       &(&amp;amp;), <(&amp;lt;), >(&amp;gt;), "(&amp;quot;), and '(&amp;apos;)
-	   are supported. However, lots of xml parsers are doing this just like irrXML, and 
-	   in future releases this will be improved.
 	 - The input xml file is not validated and assumed to be correct. 
+	 - Currently, CData-Sections are only supported as text elements.
 
-    \section example Example
+    \section irrxmlexample Example
 
     The following code demonstrates the basic usage of irrXML. A simple xml
 	file like this is parsed:
@@ -242,7 +239,7 @@ namespace io
 	createIrrXMLReader(), createIrrXMLReaderUTF16() and createIrrXMLReaderUTF32().
 	If using the parser from the Irrlicht Engine, please use IFileSystem::createXMLReader() 
 	instead.
-	For a detailed intro how to use the parser, see \ref example and \ref features.
+	For a detailed intro how to use the parser, see \ref irrxmlexample and \ref features.
 
 	The typical usage of this parser looks like this:
 	\code
@@ -268,7 +265,7 @@ namespace io
 		delete xml;
 	}
 	\endcode
-	See \ref example for a more detailed example.
+	See \ref irrxmlexample for a more detailed example.
 	*/
 	template<class char_type, class super_class>
 	class IIrrXMLReader : public super_class

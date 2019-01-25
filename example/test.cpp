@@ -36,4 +36,5 @@ int main()
 
 	// delete the xml parser after usage
 	delete xml;
+	return 0;
 }

@@ -82,7 +82,19 @@ public:
 	void push_back(const T& element)
 	{
 		if (used + 1 > allocated)
-			reallocate(used * 2 +1);
+		{
+			// reallocate(used * 2 +1);
+			// this doesn't work if the element is in the same array. So
+			// we'll copy the element first to be sure we'll get no data
+			// corruption
+
+			T e;
+			e = element;           // copy element
+			reallocate(used * 2 +1); // increase data block
+			data[used++] = e;        // push_back
+			is_sorted = false; 
+			return;
+		}
 
 		data[used++] = element;
 		is_sorted = false;
