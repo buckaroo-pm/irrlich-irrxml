@@ -1,6 +1,6 @@
 // Copyright (C) 2002-2005 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine" and the "irrXML" project.
-// For conditions of distribution and use, see copyright notice in Irrlicht.h and/or irrXML.h
+// For conditions of distribution and use, see copyright notice in irrlicht.h and/or irrXML.h
 
 #ifndef __ICXML_READER_IMPL_H_INCLUDED__
 #define __ICXML_READER_IMPL_H_INCLUDED__
@@ -75,6 +75,7 @@ public:
 			return true;
 		}
 
+		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return false;
 	}
 
@@ -143,6 +144,13 @@ public:
 	}
 
 
+	//! Returns the value of an attribute as integer. 
+	int getAttributeValueAsInt(int idx) const
+	{
+		return (int)getAttributeValueAsFloat(idx);
+	}
+
+
 	//! Returns the value of an attribute as float. 
 	float getAttributeValueAsFloat(const char_type* name) const
 	{
@@ -151,6 +159,18 @@ public:
 			return 0;
 
 		core::stringc c = attr->Value.c_str();
+		return core::fast_atof(c.c_str());
+	}
+
+
+	//! Returns the value of an attribute as float. 
+	float getAttributeValueAsFloat(int idx) const
+	{
+		const char_type* attrvalue = getAttributeValue(idx);
+		if (!attrvalue)
+			return 0;
+
+		core::stringc c = attrvalue;
 		return core::fast_atof(c.c_str());
 	}
 
@@ -220,7 +240,8 @@ private:
 			ignoreDefinition();	
 			break;
 		case L'!':
-			parseComment();	
+			if (!parseCDATA())
+				parseComment();	
 			break;
 		default:
 			parseOpeningXMLElement();
@@ -406,6 +427,50 @@ private:
 		NodeName = core::string<char_type>(pBeginClose, (int)(P - pBeginClose));
 		++P;
 	}
+
+	//! parses a possible CDATA section, returns false if begin was not a CDATA section
+	bool parseCDATA()
+	{
+		if (*(P+1) != L'[')
+			return false;
+
+		CurrentNodeType = EXN_CDATA;
+
+		// skip '<![CDATA['
+		int count=0;
+		while( *P && count<8 )
+		{
+			++P;
+			++count;
+		}
+
+		if (!*P)
+			return true;
+
+		char_type *cDataBegin = P;
+		char_type *cDataEnd = 0;
+
+		// find end of CDATA
+		while(*P && !cDataEnd)
+		{
+			if (*P == L'>' && 
+			   (*(P-1) == L']') &&
+			   (*(P-2) == L']'))
+			{
+				cDataEnd = P - 2;
+			}
+
+			++P;
+		}
+
+		if ( cDataEnd )
+			NodeName = core::string<char_type>(cDataBegin, (int)(cDataEnd - cDataBegin));
+		else
+			NodeName = "";
+
+		return true;
+	}
+
 
 	// structure for storing attribute-name pairs
 	struct SAttribute
