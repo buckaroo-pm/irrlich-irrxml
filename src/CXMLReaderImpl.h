@@ -16,6 +16,7 @@
 #define IRR_DEBUGPRINT(x)
 #endif // _DEBUG
 
+
 namespace irr
 {
 namespace io
@@ -55,6 +56,7 @@ public:
 		P = TextBegin;
 	}
     	
+
 	//! Destructor
 	virtual ~CXMLReaderImpl()
 	{
@@ -66,10 +68,10 @@ public:
 	//! \return Returns false, if there was no further node. 
 	virtual bool read()
 	{
+		// if not end reached, parse the node
 		if (P && (unsigned int)(P - TextBegin) < TextSize - 1 && *P != 0)
 		{
 			parseCurrentNode();
-			//++P;
 			return true;
 		}
 
@@ -186,35 +188,40 @@ public:
 	}
 
 private:
-	
+
+	// Reads the current xml node
 	void parseCurrentNode()
 	{
 		char_type* start = P;
 
+		// more forward until '<' found
 		while(*P != L'<' && *P)
 			++P;
 
 		if (!*P)
 			return;
 
-		if (P - start > 2)
+		if (P - start > 0)
 		{
-			// we found some text
-			setText(start, P);
-			--P;
-			return;
+			// we found some text, store it
+			if (setText(start, P))
+				return;
 		}
 
 		++P;
 
+		// based on current token, parse and report next element
 		switch(*P)
 		{
 		case L'/':
-			parseClosingXMLElement(); break;
+			parseClosingXMLElement(); 
+			break;
 		case L'?':
-			ignoreDefinition();	break;
+			ignoreDefinition();	
+			break;
 		case L'!':
-			parseComment();	break;
+			parseComment();	
+			break;
 		default:
 			parseOpeningXMLElement();
 			break;
@@ -222,12 +229,30 @@ private:
 	}
 
 
-	//! sets the state that text was found
-	void setText(char_type* start, char_type* end)
+	//! sets the state that text was found. Returns true if set should be set
+	bool setText(char_type* start, char_type* end)
 	{
+		// check if text is more than 2 characters, and if not, check if there is 
+		// only white space, so that this text won't be reported
+		if (end - start < 3)
+		{
+			char_type* p = start;
+			for(; p != end; ++p)
+				if (!isWhiteSpace(*p))
+					break;
+
+			if (p == end)
+				return false;
+		}
+
+		// set current text to the parsed text, and replace xml special characters
 		core::string<char_type> s(start, (int)(end - start));
 		NodeName = replaceSpecialCharacters(s);
+
+		// current XML node type is text
 		CurrentNodeType = EXN_TEXT;
+
+		return true;
 	}
 
 
@@ -237,6 +262,7 @@ private:
 	{
 		CurrentNodeType = EXN_UNKNOWN;
 
+		// move until end marked with '>' reached
 		while(*P != L'>')
 			++P;
 
@@ -254,6 +280,7 @@ private:
 
 		int count = 1;
 
+		// move until end of comment reached
 		while(count)
 		{
 			if (*P == L'>')
@@ -281,6 +308,7 @@ private:
 		// find name
 		const char_type* startName = P;
 
+		// find end of element
 		while(*P != L'>' && !isWhiteSpace(*P))
 			++P;
 
@@ -308,16 +336,22 @@ private:
 
 					// read the attribute value
 					// check for quotes and single quotes, thx to murphy
-					while( (*P != L'\"') && (*P != L'\'') ) 
+					while( (*P != L'\"') && (*P != L'\'') && *P) 
 						++P;
+
+					if (!*P) // malformatted xml file
+						return;
 
 					const char_type attributeQuoteChar = *P;
 
 					++P;
 					const char_type* attributeValueBegin = P;
 					
-					while(*P != attributeQuoteChar)
+					while(*P != attributeQuoteChar && *P)
 						++P;
+
+					if (!*P) // malformatted xml file
+						return;
 
 					const char_type* attributeValueEnd = P;
 					++P;
@@ -373,13 +407,14 @@ private:
 		++P;
 	}
 
-
+	// structure for storing attribute-name pairs
 	struct SAttribute
 	{
 		core::string<char_type> Name;
 		core::string<char_type> Value;
 	};
 
+	// finds a current attribute by name, returns 0 if not found
 	const SAttribute* getAttributeByName(const char_type* name) const
 	{
 		if (!name)
@@ -426,7 +461,7 @@ private:
 			{
 				newstr.append(origstr.subString(oldPos, pos - oldPos));
 				newstr.append(SpecialCharacters[specialChar][0]);
-				pos += SpecialCharacters[specialChar].size() - 1;
+				pos += SpecialCharacters[specialChar].size();
 			}
 			else
 			{
@@ -462,7 +497,7 @@ private:
 			return false;
 		}
 
-        // add zeros at end
+		// add zeros at end
 
 		data8[size-1] = 0;
 		data8[size-2] = 0;
@@ -483,14 +518,14 @@ private:
 
 		// check source for all utf versions and convert to target data format
 		
-        if (size >= 4 && data32[0] == UTF32_BE)
+		if (size >= 4 && data32[0] == (char32)UTF32_BE)
 		{
 			// UTF-32, big endian
 			SourceFormat = ETF_UTF32_BE;
 			convertTextData(data32+1, data8, (size/4)); // data32+1 because we need to skip the header
 		}
 		else
-		if (size >= 4 && data32[0] == UTF32_LE)
+		if (size >= 4 && data32[0] == (char32)UTF32_LE)
 		{
 			// UTF-32, little endian
 			SourceFormat = ETF_UTF32_LE;
@@ -580,9 +615,9 @@ private:
 			while(*t)
 			{
 				*t = ((*t & 0xff000000) >> 24) |
-			         ((*t & 0x00ff0000) >> 8)  |
-                     ((*t & 0x0000ff00) << 8)  |
-                     ((*t & 0x000000ff) << 24);
+				     ((*t & 0x00ff0000) >> 8)  |
+				     ((*t & 0x0000ff00) << 8)  |
+				     ((*t & 0x000000ff) << 24);
 				++t;
 			}
 		}
@@ -602,9 +637,9 @@ private:
 	inline bool isLittleEndian(ETEXT_FORMAT f)
 	{
 		return f == ETF_ASCII ||
-			   f == ETF_UTF8 ||
-			   f == ETF_UTF16_LE ||
-			   f == ETF_UTF32_LE;
+		       f == ETF_UTF8 ||
+		       f == ETF_UTF16_LE ||
+		       f == ETF_UTF32_LE;
 	}
 
 

@@ -271,7 +271,7 @@ public:
 
     
 	//! Returns length of string
-	//! \return Returns length of the string in characters.
+	/** \return Returns length of the string in characters. */
 	s32 size() const
 	{
 		return used-1;
@@ -280,7 +280,7 @@ public:
 
 
 	//! Returns character string
-	//! \return Returns pointer to C-style zero terminated string.
+	/** \return Returns pointer to C-style zero terminated string. */
 	const T* c_str() const
 	{
 		return array;
@@ -321,8 +321,8 @@ public:
 
 
 	//! Compares the string ignoring case.
-	//! \param other: Other string to compare.
-	//! \return Returns true if the string are equal ignoring case.
+	/** \param other: Other string to compare.
+	\return Returns true if the string are equal ignoring case. */
 	bool equals_ignore_case(const string<T>& other) const
 	{
 		for(s32 i=0; array[i] && other[i]; ++i)
@@ -362,7 +362,7 @@ public:
 
 
 	//! Appends a character to this string
-	//! \param character: Character to append.
+	/** \param character: Character to append. */
 	void append(T character)
 	{
 		if (used + 1 > allocated)
@@ -375,7 +375,7 @@ public:
 	}
 
 	//! Appends a string to this string
-	//! \param other: String to append.
+	/** \param other: String to append. */
 	void append(const string<T>& other)
 	{
 		--used;
@@ -393,8 +393,8 @@ public:
 
 
 	//! Appends a string of the length l to this string.
-	//! \param other: other String to append to this string.
-	//! \param length: How much characters of the other string to add to this one.
+	/** \param other: other String to append to this string.
+	 \param length: How much characters of the other string to add to this one. */
 	void append(const string<T>& other, s32 length)
 	{
 		s32 len = other.size();
@@ -419,7 +419,7 @@ public:
 
 
 	//! Reserves some memory.
-	//! \param count: Amount of characters to reserve.
+	/** \param count: Amount of characters to reserve. */
 	void reserve(s32 count)
 	{
 		if (count < allocated)
@@ -430,9 +430,9 @@ public:
 
 
 	//! finds first occurrence of character in string
-	//! \param c: Character to search for.
-	//! \return Returns position where the character has been found,
-	//! or -1 if not found.
+	/** \param c: Character to search for.
+	\return Returns position where the character has been found,
+	or -1 if not found. */
 	s32 findFirst(T c) const
 	{
 		for (s32 i=0; i<used; ++i)
@@ -442,12 +442,77 @@ public:
 		return -1;
 	}
 
+	//! finds first occurrence of a character of a list in string
+	/** \param c: List of strings to find. For example if the method
+	should find the first occurance of 'a' or 'b', this parameter should be "ab".
+	\param count: Amount of characters in the list. Ususally, 
+	this should be strlen(ofParameter1)
+	\return Returns position where one of the character has been found,
+	or -1 if not found. */
+	s32 findFirstChar(T* c, int count) const
+	{
+		for (s32 i=0; i<used; ++i)
+			for (int j=0; j<count; ++j)
+				if (array[i] == c[j])
+					return i;
+
+		return -1;
+	}
+
+
+	//! Finds first position of a character not in a given list.
+	/** \param c: List of characters not to find. For example if the method
+	 should find the first occurance of a character not 'a' or 'b', this parameter should be "ab".
+	\param count: Amount of characters in the list. Ususally, 
+	this should be strlen(ofParameter1)
+	\return Returns position where the character has been found,
+	or -1 if not found. */
+	template <class B> 
+	s32 findFirstCharNotInList(B* c, int count) const
+	{
+		for (int i=0; i<used; ++i)
+		{
+            int j;
+			for (j=0; j<count; ++j)
+				if (array[i] == c[j])
+					break;
+
+			if (j==count)
+				return i;
+		}
+
+		return -1;
+	}
+
+	//! Finds last position of a character not in a given list.
+	/** \param c: List of characters not to find. For example if the method
+	 should find the first occurance of a character not 'a' or 'b', this parameter should be "ab".
+	\param count: Amount of characters in the list. Ususally, 
+	this should be strlen(ofParameter1)
+	\return Returns position where the character has been found,
+	or -1 if not found. */
+	template <class B> 
+	s32 findLastCharNotInList(B* c, int count) const
+	{
+		for (int i=used-2; i>=0; --i)
+		{
+            int j;
+			for (j=0; j<count; ++j)
+				if (array[i] == c[j])
+					break;
+
+			if (j==count)
+				return i;
+		}
+
+		return -1;
+	}
 
 	//! finds next occurrence of character in string
-	//! \param c: Character to search for.
-	//! \param startPos: Position in string to start searching. 
-	//! \return Returns position where the character has been found,
-	//! or -1 if not found.
+	/** \param c: Character to search for.
+	\param startPos: Position in string to start searching. 
+	\return Returns position where the character has been found,
+	or -1 if not found. */
 	s32 findNext(T c, s32 startPos) const
 	{
 		for (s32 i=startPos; i<used; ++i)
@@ -507,6 +572,51 @@ public:
 	{
 		append(string<T>(i));
 	}
+
+	//! replaces all characters of a special type with another one
+	void replace(T toReplace, T replaceWith)
+	{
+		for (s32 i=0; i<used; ++i)
+			if (array[i] == toReplace)
+				array[i] = replaceWith;
+	}
+
+	//! trims the string.
+	/** Removes whitespace from begin and end of the string. */
+	void trim()
+	{
+		const char whitespace[] = " \t\n";
+		const int whitespacecount = 3;
+
+		// find start and end of real string without whitespace
+		int begin = findFirstCharNotInList(whitespace, whitespacecount);
+		if (begin == -1)
+			return;
+
+		int end = findLastCharNotInList(whitespace, whitespacecount);
+		if (end == -1)
+			return;
+
+		*this = subString(begin, (end +1) - begin);
+	}
+
+
+	//! Erases a character from the string. May be slow, because all elements 
+	//! following after the erased element have to be copied.
+	//! \param index: Index of element to be erased.
+	void erase(int index)
+	{
+		#if defined(_DEBUG) && defined(_MSC_VER)
+		if (index>=used || index<0)
+			_asm int 3 // access violation
+		#endif
+
+		for (int i=index+1; i<used; ++i)
+			array[i-1] = array[i];
+
+		--used;
+	}
+
     	
 
 private:
