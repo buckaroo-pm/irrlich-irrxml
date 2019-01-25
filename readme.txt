@@ -1,5 +1,5 @@
 ==========================================================================
-irrXML 1.1
+irrXML 1.2
 ==========================================================================
 
   Welcome to irrXML
@@ -53,7 +53,7 @@ irrXML 1.1
   * Visual Studio 6.0
   * Visual Studio.NET (7.0)
   * Visual Studio.NET 2003 (7.1)
-  * Visual Studio.NET 2005 Beta (8.0)
+  * Visual Studio.NET 2005 (8.0)
   * DevC++ 4.9 & gcc (project files included)
  
 ==========================================================================
